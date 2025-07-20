@@ -1,0 +1,8 @@
+Function Boolean CryptAcquireContextA (Ref ULong hProv, Ref String pszContainer,  Ref String pszProvider, ULong dwProvType,  ULong dwFlags) Library "advapi32.dll"
+Function Boolean CryptReleaseContext (ULong hProv, ULong dwFlags)   Library "advapi32.dll"
+Function Boolean CryptCreateHash (ULong hProv, UInt Algid, ULong hKey,  ULong dwFlags, Ref ULong phHash)  Library "advapi32.dll"
+Function Boolean CryptHashData (ULong hHash,  Ref String pbData,  ULong dwDataLen, ULong dwFlags) Library "advapi32.dll"
+Function Boolean CryptHashData (ULong hHash,  Ref Blob pbData,   ULong dwDataLen, ULong dwFlags)  Library "advapi32.dll"
+Function Boolean CryptDestroyHash (ULong hHash)  Library "advapi32.dll"
+Function Boolean CryptGetHashParam (ULong hHash, ULong dwParam,  Ref Blob pbData,  Ref ULong pdwDataLen, ULong dwFlags) Library "advapi32.dll"
+Function ULong GetLastError () Library "kernel32.dll"
