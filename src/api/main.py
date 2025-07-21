@@ -51,10 +51,13 @@ def create_invoice(req: InvoiceRequest):
         except json.JSONDecodeError:
             raise HTTPException(status_code=502, detail="Invalid JSON from invoice API")
 
-        return {
-            "order_id": order_id,
-            "invoice_result": result
-        }
+        if 'invoice_number' in result:
+            return result['invoice_number']
+        else:
+            return {
+                "order_id": order_id,
+                "invoice_result": result
+            }
 
     except requests.RequestException as e:
         raise HTTPException(status_code=503, detail=f"Invoice API error: {e}")
