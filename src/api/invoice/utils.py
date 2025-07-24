@@ -1,25 +1,19 @@
-from urllib.parse import urlparse, urlunparse, parse_qsl, urlencode
-import os
-import posixpath
-import logging
-from colorlog import ColoredFormatter
+# invoice/utils.py
 
-# Configure logging with colored output
-logger = logging.getLogger("invoice_utils")
-logger.setLevel(logging.DEBUG)
-handler = logging.StreamHandler()
-formatter = ColoredFormatter(
-    "%(log_color)s%(levelname)s: %(message)s%(reset)s",
-    log_colors={
-        "DEBUG": "cyan",
-        "INFO": "green",
-        "WARNING": "red",
-        "ERROR": "red",
-        "CRITICAL": "red,bg_white",
-    }
+import hashlib
+import json
+import logging
+import urllib.parse
+import time
+import requests
+from urllib.parse import urlparse, urlunparse, parse_qsl, urlencode
+import posixpath
+
+from invoice.constants import (
+    INVOICE_API_BASE_URL,
+    INVOICE_API_KEY,
+    INVOICE_API_TAX_ID,
 )
-handler.setFormatter(formatter)
-logger.addHandler(handler)
 
 def normalize_url(url):
     parsed = urlparse(url)
@@ -42,45 +36,60 @@ def normalize_url(url):
     
     return urlunparse((scheme, netloc, path, '', query, ''))
 
-def check_environment():
-    """
-    Check if the required environment variables for the invoice API are set.
-    Raises ValueError if any required variables are not set or use test values in non-debug mode.
-    """
-    from invoice.constants import (
-        INVOICE_API_KEY, INVOICE_API_TEST_KEY,
-        INVOICE_API_ACCOUNT, INVOICE_API_TEST_ACCOUNT,
-        INVOICE_API_PASSWD, INVOICE_API_TEST_PASSWD,
-        INVOICE_API_TAX_ID, INVOICE_API_TEST_TAX_ID,
-        INVOICE_API_COMPANY_NAME, INVOICE_API_TEST_COMPANY_NAME
-    )
+def create_package(timestamp: int, data: dict) -> str:
+    # Match reference: serialize JSON with no spaces
+    encoded_data = json.dumps(data, separators=(',', ':'))
 
-    # Check if debug mode is enabled
-    if os.getenv("DEBUG", "false").lower() == "true":
-        # In debug mode, warn if test values are used
-        if (INVOICE_API_KEY == INVOICE_API_TEST_KEY or
-            INVOICE_API_ACCOUNT == INVOICE_API_TEST_ACCOUNT or
-            INVOICE_API_PASSWD == INVOICE_API_TEST_PASSWD or
-            INVOICE_API_TAX_ID == INVOICE_API_TEST_TAX_ID or
-            INVOICE_API_COMPANY_NAME == INVOICE_API_TEST_COMPANY_NAME):
-            logger.warning("Using test values for invoice API in debug mode.")
-    else:
-        # In non-debug mode, ensure no test values are used
-        errors = []
-        if not INVOICE_API_KEY or INVOICE_API_KEY == INVOICE_API_TEST_KEY:
-            errors.append("INVOICE_API_KEY is not set or is using the test key")
-        if not INVOICE_API_ACCOUNT or INVOICE_API_ACCOUNT == INVOICE_API_TEST_ACCOUNT:
-            errors.append("INVOICE_API_ACCOUNT is not set or is using the test account")
-        if not INVOICE_API_PASSWD or INVOICE_API_PASSWD == INVOICE_API_TEST_PASSWD:
-            errors.append("INVOICE_API_PASSWD is not set or is using the test password")
-        if not INVOICE_API_TAX_ID or INVOICE_API_TAX_ID == INVOICE_API_TEST_TAX_ID:
-            errors.append("INVOICE_API_TAX_ID is not set or is using the test tax ID")
-        if not INVOICE_API_COMPANY_NAME or INVOICE_API_COMPANY_NAME == INVOICE_API_TEST_COMPANY_NAME:
-            errors.append("INVOICE_API_COMPANY_NAME is not set or is using the test company name")
-        
-        if errors:
-            logger.warning("The application may not function correctly due to invalid environment variables: %s", "; ".join(errors))
-            raise ValueError("Invalid environment variables: " + "; ".join(errors))
-    
-    logger.info("Environment variables for invoice API are set correctly.")
-    return True
+    # Signature: data + timestamp + key
+    raw_string = f"{encoded_data}{timestamp}{INVOICE_API_KEY}"
+    sign = hashlib.md5(raw_string.encode("utf-8")).hexdigest()
+
+    payload = {
+        "invoice": INVOICE_API_TAX_ID,
+        "data": encoded_data,
+        "time": timestamp,
+        "sign": sign,
+    }
+
+    return urllib.parse.urlencode(payload, doseq=True)
+
+def send_request(url: str, data: str) -> dict:
+    headers = {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "User-Agent": "invoice-app/1.0"
+    }
+
+    try:
+        proxies = {
+            "http": "http://localhost:8080",
+            "https": "http://localhost:8080"
+        }
+        response = requests.post(url, headers=headers, data=data, verify=False, proxies=proxies)
+        response.raise_for_status()
+
+        # Check if it's actually JSON
+        if "application/json" in response.headers.get("Content-Type", ""):
+            return response.json()
+        else:
+            logging.error(f"Unexpected response format: {response.text}")
+            return {
+                "error": "Invalid response format",
+                "content": response.text,
+                "status_code": response.status_code,
+            }
+
+    except requests.RequestException as e:
+        logging.error(f"Request failed: {e}")
+        return {
+            "error": "Request failed",
+            "details": str(e),
+            "status_code": getattr(e.response, "status_code", None),
+        }
+
+    except json.JSONDecodeError as e:
+        logging.error(f"Invalid JSON response: {e}")
+        return {
+            "error": "Invalid JSON response",
+            "details": str(e),
+            "status_code": response.status_code if response else None,
+        }

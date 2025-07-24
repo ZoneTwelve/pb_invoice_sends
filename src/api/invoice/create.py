@@ -1,22 +1,13 @@
-# invoice.py
-import hashlib
+# invoice/create.py
+
 import time
-import json
-from dotenv import load_dotenv
-import os
+import uuid
 
-load_dotenv()
+from invoice.utils import create_package, send_request
+from invoice.constants import INVOICE_API_BASE_URL, CREATE_INVOICE_URI
+from urllib.parse import urljoin
 
-APP_KEY = os.environ.get("APP_KEY") or "sHeq7t8G1wiQvhAuIM27"
-
-
-def generate_signature(data_str, timestamp, app_key):
-    """Generate MD5 signature."""
-    hash_input = data_str + str(timestamp) + app_key
-    return hashlib.md5(hash_input.encode("utf-8")).hexdigest()
-
-
-def build_invoice_payload(
+def create_invoice_online(
     price,
     buyer_identifier="0000000000",
     buyer_name="消費者",
@@ -30,11 +21,8 @@ def build_invoice_payload(
     tax_amount="0",
     tax_rate="0.05",
 ):
-    """
-    Build invoice post_data dict and return (post_data, order_id)
-    """
     timestamp = int(time.time())
-    order_id = f"ORDER{timestamp}"
+    order_id = f"ORDER{timestamp}{uuid.uuid4().hex[:4]}"
     unit_price = unit_price if unit_price is not None else price
     amount = amount if amount is not None else price
 
@@ -46,7 +34,7 @@ def build_invoice_payload(
         "ProductItem": [
             {
                 "Description": description,
-                "Quantity": quantity,
+                "Quantity": str(quantity),
                 "Unit": unit,
                 "UnitPrice": str(unit_price),
                 "Amount": str(amount),
@@ -63,14 +51,8 @@ def build_invoice_payload(
         "TotalAmount": str(price)
     }
 
-    data_str = json.dumps(invoice_data, indent=0)
-    sign = generate_signature(data_str, timestamp, APP_KEY)
+    url = urljoin(INVOICE_API_BASE_URL, CREATE_INVOICE_URI)
+    print(f"Creating invoice at {url} with data: {invoice_data}")
+    package = create_package(timestamp, invoice_data)
 
-    post_data = {
-        "invoice": "12345678",
-        "data": data_str,
-        "time": timestamp,
-        "sign": sign
-    }
-
-    return post_data, order_id
+    return send_request(url, package)

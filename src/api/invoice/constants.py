@@ -1,3 +1,5 @@
+# invoice/constants.py
+
 import os
 
 # Define constants
