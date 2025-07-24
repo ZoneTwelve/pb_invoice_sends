@@ -67,29 +67,10 @@ def send_request(url: str, data: str) -> dict:
         response = requests.post(url, headers=headers, data=data, verify=False, proxies=proxies)
         response.raise_for_status()
 
-        # Check if it's actually JSON
-        if "application/json" in response.headers.get("Content-Type", ""):
-            return response.json()
-        else:
-            logging.error(f"Unexpected response format: {response.text}")
-            return {
-                "error": "Invalid response format",
-                "content": response.text,
-                "status_code": response.status_code,
-            }
-
+        return response.json()
     except requests.RequestException as e:
         logging.error(f"Request failed: {e}")
-        return {
-            "error": "Request failed",
-            "details": str(e),
-            "status_code": getattr(e.response, "status_code", None),
-        }
-
+        return {"error": "Request failed", "details": e, "status_code": response.status_code if response else 500}
     except json.JSONDecodeError as e:
-        logging.error(f"Invalid JSON response: {e}")
-        return {
-            "error": "Invalid JSON response",
-            "details": str(e),
-            "status_code": response.status_code if response else None,
-        }
+        logging.error(f"JSON decode error: {e}")
+        return {"error": "Invalid JSON response", "status_code": 500, "details": e}

@@ -52,7 +52,6 @@ def create_invoice_online(
     }
 
     url = urljoin(INVOICE_API_BASE_URL, CREATE_INVOICE_URI)
-    print(f"Creating invoice at {url} with data: {invoice_data}")
     package = create_package(timestamp, invoice_data)
 
     return send_request(url, package)

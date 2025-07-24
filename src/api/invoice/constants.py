@@ -3,7 +3,8 @@
 import os
 
 # Define constants
-INVOICE_API_BASE_URL = "https://invoice.amego.tw"
+INVOICE_WEBSITE_BASE_URL = "https://invoice.amego.tw"
+INVOICE_API_BASE_URL = "https://invoice-api.amego.tw"
 INVOICE_API_TEST_ACCOUNT = "test@amego.tw"
 INVOICE_API_TEST_PASSWD = "12345678"
 INVOICE_API_TEST_TAX_ID = "12345678"
