@@ -7,6 +7,8 @@ import urllib.parse
 import time
 import requests
 from urllib.parse import urlparse, urlunparse, parse_qsl, urlencode
+from typing import List
+from pydantic import BaseModel, Field
 import posixpath
 
 from invoice.constants import (
@@ -14,6 +16,12 @@ from invoice.constants import (
     INVOICE_API_KEY,
     INVOICE_API_TAX_ID,
 )
+
+class InvoiceNumberItem(BaseModel):
+    InvoiceNumber: str = Field(..., description="發票號碼")
+
+class CancelInvoiceNumber(BaseModel):
+    CancelInvoiceNumber: str = Field(..., description="要作廢的發票號碼")
 
 def normalize_url(url):
     parsed = urlparse(url)
@@ -64,7 +72,7 @@ def send_request(url: str, data: str) -> dict:
             "http": "http://localhost:8080",
             "https": "http://localhost:8080"
         }
-        response = requests.post(url, headers=headers, data=data, verify=False, proxies=proxies)
+        response = requests.post(url, headers=headers, data=data, verify=False)
         response.raise_for_status()
 
         return response.json()

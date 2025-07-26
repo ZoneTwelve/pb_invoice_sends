@@ -2,9 +2,16 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, condecimal, Field
 from typing import Optional, List
-from fastapi import APIRouter
+from fastapi import APIRouter, Body, Query
 
 from invoice.create import create_invoice_online
+from invoice.search import get_invoice_status
+from invoice.cancel import cancel_invoices
+
+from invoice.utils import (
+    InvoiceNumberItem,
+    CancelInvoiceNumber
+)
 
 app = FastAPI(title="發票開立 API")
 
@@ -18,6 +25,7 @@ class CreateInvoiceRequest(BaseModel):
     unit: Optional[str] = Field(default="份", description="商品單位")
     remark: Optional[str] = Field(default="", description="商品備註")
     tax_type: Optional[str] = Field(default="1", description="課稅別（1:應稅）")
+    number_only: Optional[bool] = Field(default=False, description="是否只回傳發票號碼")
 
 class SearchInvoiceRequest(BaseModel):
     date_select: int = Field(default=1, description="日期選擇方式")
@@ -41,18 +49,37 @@ class CancelInvoiceRequest(BaseModel):
 class CancelMultipleInvoicesRequest(BaseModel):
     cancel_invoice_numbers: List[str] = Field(..., min_items=1, description="要作廢的發票號碼列表")
 
+QueryInvoicesRequest = List[InvoiceNumberItem]
+CancelInvoicesRequest = List[CancelInvoiceNumber]
+
+
 router = APIRouter(prefix="/api/v1")
 
-@router.get("/invoice")
-def get_single_invoice():
+@router.get("/invoices", summary="Get invoice(s) by query")
+def get_invoices():
     pass
+    
+@router.post("/get/invoices", summary="Search invoices")
+def get_invoices_details(req: QueryInvoicesRequest):
+    # convert req to JSON
+    invoice_numbers_json = [item.dict() for item in req]
+    response = get_invoice_status(invoice_numbers_json)
+    if "error" in response:
+        raise HTTPException(status_code=response.get("status_code", 500), detail=response["error"])
+    return response
 
-@router.get("/invoice_list")
-def get_multi_invoices():
-    pass
+@router.post("/cancel/invoices", summary="Cancel multiple invoices")
+def cancel_invoices_data(req: CancelInvoicesRequest):
+    # convert req to JSON
+    cancel_invoice_numbers_json = [item.dict() for item in req]
+    response = cancel_invoices(cancel_invoice_numbers_json)
+    if "error" in response:
+        raise HTTPException(status_code=response.get("status_code", 500), detail=response["error"])
+    return response
+    
 
-@router.post("/invoice", response_model=CreateInvoiceRequest)
-def create_invoice(req: CreateInvoiceRequest):
+@router.post("/invoice", summary="Create an invoice")
+def create_invoice(req: CreateInvoiceRequest = Body(...)):
     response = create_invoice_online(
         price=req.price,
         buyer_identifier=req.buyer_identifier,
@@ -63,13 +90,19 @@ def create_invoice(req: CreateInvoiceRequest):
         remark=req.remark,
         tax_type=req.tax_type
     )
-    # check if response contains an error
+
     if "error" in response:
-        raise HTTPException(status_code=response['status_code'], detail=response["error"])
+        raise HTTPException(
+            status_code=response.get("status_code", 500),
+            detail=response.get("error", "Unknown error")
+        )
+    # if number_only is True, return only the invoice number
+    if req.number_only:
+        return response['invoice_number']
     else:
         return response
 
-@router.delete("/invoice", response_model=CancelInvoiceRequest)
+@router.delete("/invoice")
 def cancel_invoice(req: CancelInvoiceRequest):
     pass
 
