@@ -30,9 +30,16 @@ def create_invoice_request(
     print(authorization, vatid)
     invoice_data = req.dict()
     response = create_full_invoice(invoice_data)
+    if "invoice_number" not in response:
+        print(response)
+        return "1"
     if "error" in response:
-        raise HTTPException(status_code=response.get("status_code", 500), detail=response["error"])
-    return response
+        print(response)
+        return "2"
+        # raise HTTPException(status_code=response.get("status_code", 500), detail=response["error"])
+    return response["invoice_number"]
+
+
 
 @router.post("/get/invoices", summary="Search invoices")
 def get_inovices_request(
