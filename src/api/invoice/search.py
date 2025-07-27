@@ -10,7 +10,9 @@ from invoice.constants import INVOICE_API_BASE_URL, STATUS_INVOICE_URI, SEARCH_I
 from invoice.utils import InvoiceNumberByPeriod
 
 def get_invoice_status(
-    invoice_numbers: List[InvoiceNumberItem] = []
+    invoice_numbers: List[InvoiceNumberItem] = [],
+    api_key: str = None,
+    vatid: str = None
 ):
     timestamp = int(time.time())
     # check invoice_numberse at least one item

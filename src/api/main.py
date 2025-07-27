@@ -82,8 +82,10 @@ def get_invoice_by_period_request(
     response = get_invoice_status_by_period(invoice_data, authorization, vatid)
     if "error" in response:
         # raise HTTPException(status_code=response.get("status_code", 500), detail=response["error"])
+        print(response)
         return "1"
     if "data" not in response:
+        print(response)
         return "2"
     ret_data = []
     for item in response["data"]:
