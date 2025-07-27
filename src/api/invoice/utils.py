@@ -31,6 +31,13 @@ class TheProductItem(BaseModel):
     Remark: Optional[str] = Field(default="", description="備註")
     TaxType: str = Field(..., description="課稅別（1:應稅）")
 
+class InvoiceNumberByPeriod(BaseModel):
+    date_select: int = Field(..., description="日期條件 1:發票日期 2:建立日期")
+    date_start: int = Field(..., description="開始日期，格式：YYYYMMDD，例如：20240901")
+    date_end: int = Field(..., description="結束日期，格式：YYYYMMDD，例如：20241031")
+    limit: int = Field(default=20, description="每頁顯示資料筆數 20~500，預設 20 筆")
+    page: int = Field(default=1, description="目前頁數，預設第1頁")
+
 def normalize_url(url):
     parsed = urlparse(url)
     

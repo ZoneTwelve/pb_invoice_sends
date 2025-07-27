@@ -6,6 +6,7 @@ from invoice.utils import (
     InvoiceNumberItem,
     CancelInvoiceNumber,
     TheProductItem,
+    InvoiceNumberByPeriod,
 )
 
 class CreateInvoiceRequestLegacy(BaseModel):
@@ -63,5 +64,14 @@ class CreateInvoiceRequest(BaseModel):
     TaxAmount: str = Field(..., description="稅額")
     TotalAmount: str = Field(..., description="總計金額")
 
+class InvoiceByPeriodRequest(BaseModel):
+    date_select: int = Field(default=1, description="日期條件 1:發票日期 2:建立日期")
+    date_start: int = Field(default=20230101, description="開始日期，格式：YYYYMMDD，例如：20240901")
+    date_end: int = Field(default=20230228, description="結束日期，格式：YYYYMMDD，例如：20241031")
+    limit: int = Field(default=20, ge=1, le=500, description="每頁顯示資料筆數 20~500，預設 20 筆")
+    page: int = Field(default=1, ge=1, description="目前頁數，預設第1頁")
+
+
 QueryInvoicesRequest = List[InvoiceNumberItem]
 CancelInvoicesRequest = List[CancelInvoiceNumber]
+# InvoiceByPeriodRequest = InvoiceNumberByPeriod
