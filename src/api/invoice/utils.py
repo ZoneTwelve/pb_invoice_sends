@@ -7,8 +7,8 @@ import urllib.parse
 import time
 import requests
 from urllib.parse import urlparse, urlunparse, parse_qsl, urlencode
-from typing import List
 from pydantic import BaseModel, Field
+from typing import List, Optional
 import posixpath
 
 from invoice.constants import (
@@ -22,6 +22,14 @@ class InvoiceNumberItem(BaseModel):
 
 class CancelInvoiceNumber(BaseModel):
     CancelInvoiceNumber: str = Field(..., description="要作廢的發票號碼")
+
+class TheProductItem(BaseModel):
+    Description: str = Field(..., description="商品描述")
+    Quantity: str = Field(..., description="數量")
+    UnitPrice: str = Field(..., description="單價")
+    Amount: str = Field(..., description="金額")
+    Remark: Optional[str] = Field(default="", description="備註")
+    TaxType: str = Field(..., description="課稅別（1:應稅）")
 
 def normalize_url(url):
     parsed = urlparse(url)
@@ -44,16 +52,19 @@ def normalize_url(url):
     
     return urlunparse((scheme, netloc, path, '', query, ''))
 
-def create_package(timestamp: int, data: dict) -> str:
+def create_package(timestamp: int, data: dict, api_key: str = None, vatid: str = None) -> str:
+    invoice_api_key = api_key or INVOICE_API_KEY
+    invoice_api_tax_id = vatid or INVOICE_API_TAX_ID
+
     # Match reference: serialize JSON with no spaces
     encoded_data = json.dumps(data, separators=(',', ':'))
 
     # Signature: data + timestamp + key
-    raw_string = f"{encoded_data}{timestamp}{INVOICE_API_KEY}"
+    raw_string = f"{encoded_data}{timestamp}{invoice_api_key}"
     sign = hashlib.md5(raw_string.encode("utf-8")).hexdigest()
 
     payload = {
-        "invoice": INVOICE_API_TAX_ID,
+        "invoice": invoice_api_tax_id,
         "data": encoded_data,
         "time": timestamp,
         "sign": sign,

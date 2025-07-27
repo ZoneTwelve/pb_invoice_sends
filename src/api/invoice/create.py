@@ -7,6 +7,24 @@ from invoice.utils import create_package, send_request
 from invoice.constants import INVOICE_API_BASE_URL, CREATE_INVOICE_URI
 from urllib.parse import urljoin
 
+def create_full_invoice(data: dict, api_key: str = None, vatid: str = None):
+    if api_key is None or vatid is None:
+        msg = {
+            "error": "缺少必要的標頭：請在請求標頭中包含 'Authorization' 和 'VATID'。",
+            "status_code": 400,
+        }
+        print(msg)
+        # return msg
+    timestamp = int(time.time())
+    order_id = f"ORDER{timestamp}{uuid.uuid4().hex[:4]}"
+    # Overwrite the order id in the data
+    data['OrderId'] = order_id
+    
+    url = urljoin(INVOICE_API_BASE_URL, CREATE_INVOICE_URI)
+    package = create_package(timestamp, data)
+
+    return send_request(url, package)
+
 def create_invoice_online(
     price,
     buyer_identifier="0000000000",
