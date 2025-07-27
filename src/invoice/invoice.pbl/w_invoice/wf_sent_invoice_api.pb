@@ -47,8 +47,8 @@ ole_http = CREATE OLEObject
 li_rc = ole_http.ConnectToNewObject("MSXML2.XMLHTTP")
 
 IF li_rc <> 0 THEN
-    MessageBox("Error", "Failed to create XMLHTTP object.")
-    RETURN
+    // MessageBox("Error", "Failed to create XMLHTTP object.")
+    RETURN "Error; failed to create XMLHTTP object."
 END IF
 
 TRY
@@ -66,24 +66,22 @@ TRY
             // MessageBox("Success", ls_response)
         ELSE
             // MessageBox("No Response", "Server returned status 200 but no body.")
-            ls_error_message = "Server returned status 200 but no body."
+            ls_error_message = "Error; Server returned status 200 but no body."
         END IF
     ELSE
         // MessageBox("HTTP Error", "Status: " + String(li_status))
-        ls_error_message = "HTTP Error: Status " + String(li_status) + " - " + ole_http.statusText
+        ls_error_message = "Error; HTTP Error: Status " + String(li_status) + " - " + ole_http.statusText
     END IF
 
 CATCH (OLERuntimeError ole_err)
     // MessageBox("OLE Error", ole_err.Description)
-    ls_error_message = "OLE Error: " + ole_err.Description
+    ls_error_message = "Error; OLE Error: " + ole_err.Description
 
 FINALLY
     DESTROY ole_http
-END TRY
-
-// If there no error message, return response
-IF ls_error_message <> "" THEN
-    return ls_error_message
-ELSE
+    // If there no error message, return response
+    IF ls_error_message <> "" THEN
+        return ls_error_message
+    END IF
     return ls_response
-END IF
+END TRY
