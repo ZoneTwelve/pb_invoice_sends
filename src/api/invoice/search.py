@@ -24,7 +24,7 @@ def get_invoice_status(
     return send_request(url, package)
 
 def get_invoice_status_by_period(
-        data: InvoiceNumberByPeriod
+    data: InvoiceNumberByPeriod
 ):
     timestamp = int(time.time())
     url = urljoin(INVOICE_API_BASE_URL, SEARCH_INVOICE_LIST_URI)

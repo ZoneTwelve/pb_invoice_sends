@@ -90,7 +90,7 @@ def get_invoice_by_period_request(
     ret_data = []
     for item in response["data"]:
         ret_data.append(
-            f"{item['invoice_date']},{item['invoice_time']},{item['invoice_number']},{item['buyer_identifier']},{item['total_amount']},{item['invoice_status']},{item['carrier_id1']}"
+            f"{item['invoice_date']},{item['invoice_time']},{item['invoice_number']},{item['buyer_identifier']},{item['total_amount']},{item['invoice_type']},{item['invoice_status']},{item['carrier_id1']}"
         )
     return "。".join(ret_data)
     # return response
