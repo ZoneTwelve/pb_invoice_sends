@@ -22,7 +22,7 @@ def create_full_invoice(data: dict, api_key: str = None, vatid: str = None):
     data['OrderId'] = order_id
     
     url = urljoin(INVOICE_API_BASE_URL, CREATE_INVOICE_URI)
-    package = create_package(timestamp, data)
+    package = create_package(timestamp, data, api_key, vatid)
 
     return send_request(url, package)
 

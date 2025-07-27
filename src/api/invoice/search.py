@@ -19,7 +19,7 @@ def get_invoice_status(
     if len(invoice_numbers) == 0:
         raise ValueError("invoice_numbers cannot be empty.")
     url = urljoin(INVOICE_API_BASE_URL, STATUS_INVOICE_URI)
-    package = create_package(timestamp, invoice_numbers)
+    package = create_package(timestamp, invoice_numbers, api_key, vatid)
 
     return send_request(url, package)
 
@@ -28,6 +28,6 @@ def get_invoice_status_by_period(
 ):
     timestamp = int(time.time())
     url = urljoin(INVOICE_API_BASE_URL, SEARCH_INVOICE_LIST_URI)
-    package = create_package(timestamp, data)
+    package = create_package(timestamp, data, api_key, vatid)
 
     return send_request(url, package)

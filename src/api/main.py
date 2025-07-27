@@ -27,9 +27,8 @@ def create_invoice_request(
     vatid: Annotated[str, Header(alias="VATID")] = INVOICE_API_TAX_ID,
 ):
     # convert req to JSON
-    print(authorization, vatid)
     invoice_data = req.dict()
-    response = create_full_invoice(invoice_data)
+    response = create_full_invoice(invoice_data, authorization, vatid)
     if "invoice_number" not in response:
         print(response)
         return "1"
@@ -49,7 +48,7 @@ def get_inovices_request(
 ):
     # convert req to JSON
     invoice_numbers_json = [item.dict() for item in req]
-    response = get_invoice_status(invoice_numbers_json)
+    response = get_invoice_status(invoice_numbers_json, authorization, vatid)
     if "error" in response:
         # raise HTTPException(status_code=response.get("status_code", 500), detail=response["error"])
         # http status code 500 and return error data string "1"
@@ -67,7 +66,7 @@ def cancel_invoices_request(
 ):
     # convert req to JSON
     cancel_invoice_numbers_json = [item.dict() for item in req]
-    response = cancel_invoices(cancel_invoice_numbers_json)
+    response = cancel_invoices(cancel_invoice_numbers_json, authorization, vatid)
     if "error" in response:
         raise HTTPException(status_code=response.get("status_code", 500), detail=response["error"])
     return response
@@ -80,10 +79,9 @@ def get_invoice_by_period_request(
 ):
     # convert req to JSON
     invoice_data = req.dict()
-    response = get_invoice_status_by_period(invoice_data)
+    response = get_invoice_status_by_period(invoice_data, authorization, vatid)
     if "error" in response:
         # raise HTTPException(status_code=response.get("status_code", 500), detail=response["error"])
-        print(response)
         return "1"
     if "data" not in response:
         return "2"

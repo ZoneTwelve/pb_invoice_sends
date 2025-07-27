@@ -8,7 +8,9 @@ from invoice.utils import InvoiceNumberItem
 from invoice.constants import INVOICE_API_BASE_URL, CANCEL_INVOICE_URI
 
 def cancel_invoices(
-    invoice_numbers: List[InvoiceNumberItem] = []
+    invoice_numbers: List[InvoiceNumberItem] = [],
+    api_key: str = None,
+    vatid: str = None
 ):
     timestamp = int(time.time())
     # check invoice_numberse at least one item
@@ -17,6 +19,6 @@ def cancel_invoices(
     if len(invoice_numbers) == 0:
         raise ValueError("invoice_numbers cannot be empty.")
     url = urljoin(INVOICE_API_BASE_URL, CANCEL_INVOICE_URI)
-    package = create_package(timestamp, invoice_numbers)
+    package = create_package(timestamp, invoice_numbers, api_key, vatid)
 
     return send_request(url, package)
