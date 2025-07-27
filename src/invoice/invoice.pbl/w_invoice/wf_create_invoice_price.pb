@@ -1,1 +1,0 @@
-return '{"price": 121}'

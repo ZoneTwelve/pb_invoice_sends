@@ -53,8 +53,9 @@ def create_invoice_request(
     vatid: Annotated[str, Header(alias="VATID")] = None,
 ):
     # convert req to JSON
+    print(authorization, vatid)
     invoice_data = req.dict()
-    response = create_full_invoice(invoice_data, authorization, vatid)
+    response = create_full_invoice(invoice_data)
     if "error" in response:
         raise HTTPException(status_code=response.get("status_code", 500), detail=response["error"])
     return response

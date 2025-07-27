@@ -7,6 +7,7 @@ from invoice.utils import create_package, send_request
 from invoice.constants import INVOICE_API_BASE_URL, CREATE_INVOICE_URI
 from urllib.parse import urljoin
 
+# https://www.einvoice.nat.gov.tw/static/ptl/ein_upload/attachments/1693297176294_0.pdf
 def create_full_invoice(data: dict, api_key: str = None, vatid: str = None):
     if api_key is None or vatid is None:
         msg = {

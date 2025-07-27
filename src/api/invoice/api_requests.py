@@ -1,3 +1,4 @@
+# invoice/api_requests.py
 from pydantic import BaseModel, condecimal, Field
 from typing import Optional, List
 
@@ -44,7 +45,7 @@ class CancelMultipleInvoicesRequest(BaseModel):
     cancel_invoice_numbers: List[str] = Field(..., min_items=1, description="要作廢的發票號碼列表")
 
 class CreateInvoiceRequest(BaseModel):
-    OrderId: str = Field(..., description="訂單編號")
+    OrderId: Optional[str] = Field(default=None, description="訂單編號")
     BuyerIdentifier: Optional[str] = Field(default="0000000000", description="買方統一編號")
     BuyerName: Optional[str] = Field(default="客人", description="買方名稱")
     BuyerAddress: Optional[str] = Field(default="", description="買方地址")
@@ -63,6 +64,10 @@ class CreateInvoiceRequest(BaseModel):
     TaxRate: str = Field(..., description="稅率")
     TaxAmount: str = Field(..., description="稅額")
     TotalAmount: str = Field(..., description="總計金額")
+
+    class Config:
+        validate_by_name = True
+        arbitrary_types_allowed = True
 
 class InvoiceByPeriodRequest(BaseModel):
     date_select: int = Field(default=1, description="日期條件 1:發票日期 2:建立日期")
