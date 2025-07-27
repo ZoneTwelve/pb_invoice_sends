@@ -5,7 +5,7 @@
 
 OLEObject ole_http
 Integer li_rc
-String ls_url, ls_payload, ls_response
+String ls_url, ls_payload, ls_response, ls_error_message
 Integer li_status
 
 // Basic variables
@@ -13,6 +13,9 @@ String ls_base_url, ls_create_uri, ls_search_uri, ls_cancel_uri, ls_search_by_pe
 String ls_payload_create_general, ls_payload_create_carrier, ls_payload_create_vat
 String ls_payload_search_general, ls_payload_search_period, ls_payload_cancel_general
 String ls_api_key, ls_vat_id
+
+// Default values
+ls_error_message = ""
 
 // Base URI
 ls_base_url = "http://34.80.35.26:35206"
@@ -60,17 +63,27 @@ TRY
     IF li_status = 200 THEN
         ls_response = ole_http.ResponseText
         IF Len(Trim(ls_response)) > 0 THEN
-            MessageBox("Success", ls_response)
+            // MessageBox("Success", ls_response)
         ELSE
-            MessageBox("No Response", "Server returned status 200 but no body.")
+            // MessageBox("No Response", "Server returned status 200 but no body.")
+            ls_error_message = "Server returned status 200 but no body."
         END IF
     ELSE
-        MessageBox("HTTP Error", "Status: " + String(li_status))
+        // MessageBox("HTTP Error", "Status: " + String(li_status))
+        ls_error_message = "HTTP Error: Status " + String(li_status) + " - " + ole_http.statusText
     END IF
 
 CATCH (OLERuntimeError ole_err)
-    MessageBox("OLE Error", ole_err.Description)
+    // MessageBox("OLE Error", ole_err.Description)
+    ls_error_message = "OLE Error: " + ole_err.Description
 
 FINALLY
     DESTROY ole_http
 END TRY
+
+// If there no error message, return response
+IF ls_error_message <> "" THEN
+    return ls_error_message
+ELSE
+    return ls_response
+END IF
