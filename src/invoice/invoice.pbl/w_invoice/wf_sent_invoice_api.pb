@@ -1,3 +1,8 @@
+// as_url
+// as_payload
+// as_api_key
+// as_vatid
+
 OLEObject ole_http
 Integer li_rc
 String ls_url, ls_payload, ls_response
@@ -44,12 +49,12 @@ IF li_rc <> 0 THEN
 END IF
 
 TRY
-    ole_http.Open("POST", ls_url, FALSE)
+    ole_http.Open("POST", as_url, FALSE)
     ole_http.setRequestHeader("Content-Type", "application/json")
-    ole_http.setRequestHeader("Authorization", ls_api_key)
-    ole_http.setRequestHeader("VATID", ls_vat_id)
+    ole_http.setRequestHeader("Authorization", as_api_key)
+    ole_http.setRequestHeader("VATID", as_vatid)
     
-    ole_http.Send(ls_payload)
+    ole_http.Send(as_payload)
 
     li_status = ole_http.Status
     IF li_status = 200 THEN
