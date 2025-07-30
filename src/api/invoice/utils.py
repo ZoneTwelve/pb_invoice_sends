@@ -67,10 +67,10 @@ def create_package(timestamp: int, data: dict, api_key: str = None, vatid: str =
 
     # JSON serialization must match the server format
     # indent=0 keeps the newline formatting used in the official reference
-    encoded_data = json.dumps(data, indent=0, ensure_ascii=False)
+    encoded_data = json.dumps(data, indent=0)
 
     # Build the raw signature string
-    raw_string = f"{encoded_data}{timestamp}{invoice_api_key}"
+    raw_string = encoded_data + str(timestamp) + invoice_api_key
     sign = hashlib.md5(raw_string.encode("utf-8")).hexdigest()
 
     # Final payload structure
@@ -82,6 +82,7 @@ def create_package(timestamp: int, data: dict, api_key: str = None, vatid: str =
     }
 
     # URL-encode the entire payload
+    print(payload)
     return urllib.parse.urlencode(payload, doseq=True)
 
 def send_request(url: str, data: str) -> dict:
