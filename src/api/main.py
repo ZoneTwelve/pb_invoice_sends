@@ -25,17 +25,13 @@ def create_invoice_request(
     req: CreateInvoiceRequest = Body(...),
     authorization: Annotated[str, Header(alias="Authorization")] = INVOICE_API_TEST_KEY,
     vatid: Annotated[str, Header(alias="VATID")] = INVOICE_API_TAX_ID,
+    debug: Annotated[str, Header(alias='debug')] = 'false',
 ):
     # convert req to JSON
     invoice_data = req.dict()
     response = create_full_invoice(invoice_data, authorization, vatid)
-    if "invoice_number" not in response:
-        print(response)
-        return "1"
-    if "error" in response:
-        print(response)
-        return "2"
-        # raise HTTPException(status_code=response.get("status_code", 500), detail=response["error"])
+    if "invoice_number" not in response or "error" in response:
+        return "1" if debug == 'false' else response
     return response["invoice_number"]
 
 
@@ -45,6 +41,7 @@ def get_inovices_request(
     req: QueryInvoicesRequest,
     authorization: Annotated[str, Header(alias="Authorization")] = INVOICE_API_TEST_KEY,
     vatid: Annotated[str, Header(alias="VATID")] = INVOICE_API_TAX_ID,
+    debug: Annotated[str, Header(alias='debug')] = 'false',
 ):
     # convert req to JSON
     invoice_numbers_json = [item.dict() for item in req]
@@ -63,6 +60,7 @@ def cancel_invoices_request(
     req: CancelInvoicesRequest,
     authorization: Annotated[str, Header(alias="Authorization")] = INVOICE_API_TEST_KEY,
     vatid: Annotated[str, Header(alias="VATID")] = INVOICE_API_TAX_ID,
+    debug: Annotated[str, Header(alias='debug')] = 'false',
 ):
     # convert req to JSON
     cancel_invoice_numbers_json = [item.dict() for item in req]
@@ -76,6 +74,7 @@ def get_invoice_by_period_request(
     req: InvoiceByPeriodRequest = Body(...),
     authorization: Annotated[str, Header(alias="Authorization")] = INVOICE_API_TEST_KEY,
     vatid: Annotated[str, Header(alias="VATID")] = INVOICE_API_TAX_ID,
+    debug: Annotated[str, Header(alias='debug')] = 'false',
 ):
     # convert req to JSON
     invoice_data = req.dict()

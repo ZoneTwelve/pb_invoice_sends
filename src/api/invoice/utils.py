@@ -62,9 +62,10 @@ def normalize_url(url):
 def create_package(timestamp: int, data: dict, api_key: str = None, vatid: str = None) -> str:
     invoice_api_key = api_key or INVOICE_API_KEY
     invoice_api_tax_id = vatid or INVOICE_API_TAX_ID
-    print(f"Creating package with timestamp: {timestamp}, API Key: {invoice_api_key}, VAT ID: {invoice_api_tax_id}")
+    print(f"Creating package with timestamp: {timestamp}, API Key: '{invoice_api_key}', VAT ID: '{invoice_api_tax_id}'")
     # Match reference: serialize JSON with no spaces
-    encoded_data = json.dumps(data, separators=(',', ':'))
+    # encoded_data = json.dumps(data, separators=(',', ':'))
+    encoded_data = json.dumps(data, indent = 0)
 
     # Signature: data + timestamp + key
     raw_string = f"{encoded_data}{timestamp}{invoice_api_key}"
