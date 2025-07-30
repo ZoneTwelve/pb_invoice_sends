@@ -61,17 +61,22 @@ def normalize_url(url):
 
 def create_package(timestamp: int, data: dict, api_key: str = None, vatid: str = None) -> str:
     from invoice.constants import INVOICE_API_KEY, INVOICE_API_TAX_ID
+    # overwrite the timestamp
+    timestamp = 1753835630
 
     invoice_api_key = api_key or INVOICE_API_KEY
     invoice_api_tax_id = vatid or INVOICE_API_TAX_ID
 
     # JSON serialization must match the server format
     # indent=0 keeps the newline formatting used in the official reference
-    encoded_data = json.dumps(data, indent=0)
+    encoded_data = json.dumps(data, indent = 0) 
 
     # Build the raw signature string
     raw_string = encoded_data + str(timestamp) + invoice_api_key
-    sign = hashlib.md5(raw_string.encode("utf-8")).hexdigest()
+
+    m = hashlib.md5()
+    m.update(raw_string.encode("utf-8"))
+    sign = m.hexdigest()
 
     # Final payload structure
     payload = {

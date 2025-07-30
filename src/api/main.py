@@ -3,13 +3,15 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, condecimal, Field
 from typing import Optional, List, Annotated
 from fastapi import APIRouter, Body, Query, Header
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+from fastapi.exception_handlers import request_validation_exception_handler
 
 from invoice.create import create_full_invoice
 from invoice.search import get_invoice_status, get_invoice_status_by_period
 from invoice.cancel import cancel_invoices
 from invoice.constants import INVOICE_API_TEST_KEY, INVOICE_API_TAX_ID
 
-app = FastAPI(title="發票開立 API")
 
 from invoice.api_requests import (
     CreateInvoiceRequest,
@@ -18,14 +20,23 @@ from invoice.api_requests import (
     InvoiceByPeriodRequest,
 )
 
+app = FastAPI(title="發票開立 API")
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request, exc):
+    return JSONResponse(
+        status_code=422,
+        content={"detail": exc.errors(), "body": exc.body}
+    )
+
 router = APIRouter(prefix="/api/v1")
 
 @router.post("/create/invoice", summary="開立發票")
 def create_invoice_request(
-    req: CreateInvoiceRequest = Body(...),
-    authorization: Annotated[str, Header(alias="Authorization")] = INVOICE_API_TEST_KEY,
-    vatid: Annotated[str, Header(alias="VATID")] = INVOICE_API_TAX_ID,
+    authorization: Annotated[str, Header(alias="Authorization")],
+    vatid: Annotated[str, Header(alias="VATID")],
     debug: Annotated[str, Header(alias='debug')] = 'false',
+    req: CreateInvoiceRequest = Body(...),
 ):
     # convert req to JSON
     invoice_data = req.dict()
@@ -39,8 +50,8 @@ def create_invoice_request(
 @router.post("/get/invoices", summary="Search invoices")
 def get_inovices_request(
     req: QueryInvoicesRequest,
-    authorization: Annotated[str, Header(alias="Authorization")] = INVOICE_API_TEST_KEY,
-    vatid: Annotated[str, Header(alias="VATID")] = INVOICE_API_TAX_ID,
+    authorization: Annotated[str, Header(alias="Authorization")],
+    vatid: Annotated[str, Header(alias="VATID")],
     debug: Annotated[str, Header(alias='debug')] = 'false',
 ):
     # convert req to JSON
@@ -58,8 +69,8 @@ def get_inovices_request(
 @router.post("/cancel/invoices", summary="Cancel multiple invoices")
 def cancel_invoices_request(
     req: CancelInvoicesRequest,
-    authorization: Annotated[str, Header(alias="Authorization")] = INVOICE_API_TEST_KEY,
-    vatid: Annotated[str, Header(alias="VATID")] = INVOICE_API_TAX_ID,
+    authorization: Annotated[str, Header(alias="Authorization")],
+    vatid: Annotated[str, Header(alias="VATID")],
     debug: Annotated[str, Header(alias='debug')] = 'false',
 ):
     # convert req to JSON
@@ -71,9 +82,9 @@ def cancel_invoices_request(
 
 @router.post("/get/invoice/period", summary="發票列表/發票的主檔資料")
 def get_invoice_by_period_request(
+    authorization: Annotated[str, Header(alias="Authorization")],
+    vatid: Annotated[str, Header(alias="VATID")],
     req: InvoiceByPeriodRequest = Body(...),
-    authorization: Annotated[str, Header(alias="Authorization")] = INVOICE_API_TEST_KEY,
-    vatid: Annotated[str, Header(alias="VATID")] = INVOICE_API_TAX_ID,
     debug: Annotated[str, Header(alias='debug')] = 'false',
 ):
     # convert req to JSON
