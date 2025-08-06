@@ -61,8 +61,6 @@ def normalize_url(url):
 
 def create_package(timestamp: int, data: dict, api_key: str = None, vatid: str = None) -> str:
     from invoice.constants import INVOICE_API_KEY, INVOICE_API_TAX_ID
-    # overwrite the timestamp
-    timestamp = 1753835630
 
     invoice_api_key = api_key or INVOICE_API_KEY
     invoice_api_tax_id = vatid or INVOICE_API_TAX_ID
