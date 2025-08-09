@@ -14,14 +14,21 @@ AUTHORIZATION = os.getenv("Authorization")
 PRINTER_IP = os.getenv("PRINTER_IP", "192.168.1.147")
 PRINTER_PORT = int(os.getenv("PRINTER_PORT", "9100"))
 PRINT_FOLDER = os.getenv("PRINT_FOLDER", r"C:\BDPOS7\Invoice")
+PRINT_TIMEOUT = 10  # seconds
 
 def print_to_printer(base64_data: str):
-    """Decode base64 ESC/POS data and send to printer via TCP."""
+    """Decode base64 ESC/POS data and send to printer via TCP with timeout."""
     raw_bytes = base64.b64decode(base64_data)
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.connect((PRINTER_IP, PRINTER_PORT))
-        s.sendall(raw_bytes)
-    print("✅ Print command sent successfully.")
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.settimeout(PRINT_TIMEOUT)
+            s.connect((PRINTER_IP, PRINTER_PORT))
+            s.sendall(raw_bytes)
+        print("✅ Print command sent successfully.")
+        return True
+    except (socket.timeout, socket.error):
+        print("❌ Cannot be printed")
+        return False
 
 def get_invoice_data(invoice_number: str, print_invoice_type: int):
     """Request invoice ESC/POS data from API."""
@@ -40,7 +47,7 @@ def get_invoice_data(invoice_number: str, print_invoice_type: int):
         "invoice_number": invoice_number
     }
 
-    response = requests.post(url, headers=headers, json=payload)
+    response = requests.post(url, headers=headers, json=payload, timeout=10)
     response.raise_for_status()
     data = response.json()
 
@@ -50,13 +57,12 @@ def get_invoice_data(invoice_number: str, print_invoice_type: int):
         raise ValueError("No base64_data found in API response")
 
 def process_latest_invoice():
-    """Find the newest invoice file, print it, then delete it."""
+    """Find the newest invoice file, print it, then delete it (even if print fails)."""
     folder_path = Path(PRINT_FOLDER)
     if not folder_path.exists():
         print(f"❌ Print folder not found: {PRINT_FOLDER}")
         return
 
-    # Get all XML files sorted by creation time (newest first)
     files = sorted(folder_path.glob("*.xml"), key=lambda f: f.stat().st_ctime, reverse=True)
 
     if not files:
@@ -78,11 +84,15 @@ def process_latest_invoice():
         base64_data = get_invoice_data(invoice_number, print_invoice_type)
         print_to_printer(base64_data)
 
-        latest_file.unlink()
-        print(f"🗑 Deleted {latest_file.name}")
-
     except Exception as e:
         print(f"❌ Error processing {latest_file.name}: {e}")
+
+    finally:
+        try:
+            latest_file.unlink()
+            print(f"🗑 Deleted {latest_file.name}")
+        except Exception as del_err:
+            print(f"⚠ Failed to delete file: {del_err}")
 
 if __name__ == "__main__":
     process_latest_invoice()
