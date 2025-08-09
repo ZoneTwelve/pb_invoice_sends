@@ -1,9 +1,9 @@
 import os
-import sys
 import socket
 import base64
 import requests
 from dotenv import load_dotenv
+from pathlib import Path
 
 # Load environment variables
 load_dotenv("config.txt")
@@ -13,6 +13,7 @@ VATID = os.getenv("VATID")
 AUTHORIZATION = os.getenv("Authorization")
 PRINTER_IP = os.getenv("PRINTER_IP", "192.168.1.147")
 PRINTER_PORT = int(os.getenv("PRINTER_PORT", "9100"))
+PRINT_FOLDER = os.getenv("PRINT_FOLDER", r"C:\BDPOS7\Invoice")
 
 def print_to_printer(base64_data: str):
     """Decode base64 ESC/POS data and send to printer via TCP."""
@@ -22,7 +23,7 @@ def print_to_printer(base64_data: str):
         s.sendall(raw_bytes)
     print("✅ Print command sent successfully.")
 
-def get_invoice_data(invoice_number: str):
+def get_invoice_data(invoice_number: str, print_invoice_type: int):
     """Request invoice ESC/POS data from API."""
     url = f"{SERVER_ADDR}/api/v1/print/invoice"
     headers = {
@@ -35,7 +36,7 @@ def get_invoice_data(invoice_number: str):
     payload = {
         "type": "invoice",
         "printer_type": 2,
-        "print_invoice_type": 1,
+        "print_invoice_type": print_invoice_type,
         "invoice_number": invoice_number
     }
 
@@ -48,18 +49,41 @@ def get_invoice_data(invoice_number: str):
     else:
         raise ValueError("No base64_data found in API response")
 
-if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("❌ Usage: invoice_print.exe <invoice_number>")
-        sys.exit(1)
+def process_latest_invoice():
+    """Find the newest invoice file, print it, then delete it."""
+    folder_path = Path(PRINT_FOLDER)
+    if not folder_path.exists():
+        print(f"❌ Print folder not found: {PRINT_FOLDER}")
+        return
 
-    invoice_number = sys.argv[1]
+    # Get all XML files sorted by creation time (newest first)
+    files = sorted(folder_path.glob("*.xml"), key=lambda f: f.stat().st_ctime, reverse=True)
 
+    if not files:
+        print("ℹ No invoice files found.")
+        return
+
+    latest_file = files[0]
     try:
-        base64_data = get_invoice_data(invoice_number)
-        print(base64_data)
-        #print_to_printer(base64_data)
+        parts = latest_file.stem.split("-")
+        if len(parts) != 2:
+            print(f"⚠ Skipping invalid file format: {latest_file.name}")
+            return
+
+        invoice_number = parts[0]
+        print_invoice_type = int(parts[1])
+
+        print(f"🖨 Printing {invoice_number} (type {print_invoice_type})...")
+
+        base64_data = get_invoice_data(invoice_number, print_invoice_type)
+        print_to_printer(base64_data)
+
+        latest_file.unlink()
+        print(f"🗑 Deleted {latest_file.name}")
+
     except Exception as e:
-        print(f"❌ Error: {e}")
-        sys.exit(1)
+        print(f"❌ Error processing {latest_file.name}: {e}")
+
+if __name__ == "__main__":
+    process_latest_invoice()
 
