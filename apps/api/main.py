@@ -9,18 +9,22 @@ from fastapi.exception_handlers import request_validation_exception_handler
 from fastapi.middleware.cors import CORSMiddleware
 
 from invoice.create import create_full_invoice
-from invoice.search import get_invoice_status, get_invoice_status_by_period, get_print_invoice
+from invoice.search import (
+    get_invoice_status,
+    get_invoice_status_by_period,
+    get_print_invoice,
+    get_company_vat_info,
+)
 from invoice.cancel import cancel_invoices
 from invoice.constants import INVOICE_API_TEST_KEY, INVOICE_API_TAX_ID
-import base64
-
 
 from invoice.api_requests import (
     CreateInvoiceRequest,
     QueryInvoicesRequest,
     CancelInvoicesRequest,
     InvoiceByPeriodRequest,
-    InvoicePrintDetails
+    InvoicePrintDetailsRequest,
+    CompanyVATInfoRequest,
 )
 
 app = FastAPI(title="發票開立 API")
@@ -127,7 +131,7 @@ def get_invoice_by_period_request(
 def get_print_invoice_data(
     authorization: Annotated[str, Header(alias="Authorization")] = INVOICE_API_TEST_KEY,
     vatid: Annotated[str, Header(alias="VATID")] = INVOICE_API_TAX_ID,
-    req: InvoicePrintDetails = Body(...),
+    req: InvoicePrintDetailsRequest = Body(...),
     debug: Annotated[Literal["true", "false"], Header(alias="debug")] = 'false',
 ):
     # convert req to JSON
@@ -136,12 +140,25 @@ def get_print_invoice_data(
 
     if debug == "true":
         return response
-    
-    # if "code" in response and response["code"] == 0:
-    #     base64_data = response["data"]["base64_data"]
-    #     decoded_data = base64.b64decode(base64_data)
-    #     return decoded_data
+
     return response
 
-
+@router.post("company/vat/info", summary="查詢統一編號對應的公司名稱")
+def get_info_from_vatid(
+    authorization: Annotated[str, Header(alias="Authorization")] = INVOICE_API_TEST_KEY,
+    vatid: Annotated[str, Header(alias="VATID")] = INVOICE_API_TAX_ID,
+    req: CompanyVATInfoRequest = Body(...),
+    debug: Annotated[Literal["true", "false"], Header(alias="debug")] = 'false',
+):
+    # convert req to JSON
+    data_in_json = [item.dict() for item in req]
+    response = get_company_vat_info(data_in_json, authorization, vatid)
+    if debug == 'true':
+        return response
+    if "error" in response:
+        raise HTTPException(status_code=response.get("status_code", 500), detail=response["error"])
+    # check response['data'][0] exist then return the data['name']
+    if "data" not in response or len(response["data"]) == 0:
+        return "0018"
+    return response["data"][0]["name"]
 app.include_router(router)

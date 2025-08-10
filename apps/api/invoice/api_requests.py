@@ -78,13 +78,17 @@ class InvoiceByPeriodRequest(BaseModel):
     limit: int = Field(default=20, ge=1, le=500, description="每頁顯示資料筆數 20~500，預設 20 筆")
     page: int = Field(default=1, ge=1, description="目前頁數，預設第1頁")
 
-class InvoicePrintDetails(BaseModel):
+class InvoicePrintDetailsRequest(BaseModel):
     type: Annotated[str, Literal["order", "invoice"]] = Field(..., description="查詢類型 order：訂單編號 invoice：發票號碼，擇一查詢")
     printer_type: int = Field(default=2, description="列印格式 1：發票正本 2：發票補印 3：單印明細(僅限制Xprinter 芯燁通用以後的機型B2C發票可使用)")
     print_invoice_type: int = Field(default=1, description="列印 1.發票正本 或 2.發票補印 這兩種格式，可以設定是否列印明細 1:列印(預設) 0:不列印 打統編一律列印明細 此參數僅限制Xprinter 芯燁通用機型可使用")
     order_id: Optional[str] = Field(default=None, max_length=40, description="訂單編號，不可超過40字。以發票日期為主，只能查詢180天內的發票")
     invoice_number: Optional[str] = Field(default=None, max_length=10, description="發票號碼，不可超過10字。以發票日期為主，只能查詢180天內的發票")
 
+class CompanyBANNumber(BaseModel):
+    ban: str = Field(..., description="統一編號，數字8碼 統編基本檢查邏輯請參考 營利事業統一編號檢查碼邏輯修正說明: https://www.fia.gov.tw/singlehtml/3?cntId=c4d9cff38c8642ef8872774ee9987283")
+
 QueryInvoicesRequest = List[InvoiceNumberItem]
 CancelInvoicesRequest = List[CancelInvoiceNumber]
+CompanyVATInfoRequest = List[CompanyBANNumber]
 # InvoiceByPeriodRequest = InvoiceNumberByPeriod

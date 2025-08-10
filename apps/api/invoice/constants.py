@@ -19,6 +19,7 @@ SEARCH_INVOICE_URI = "/json/invoice_query"
 SEARCH_INVOICE_LIST_URI = "/json/invoice_list"
 GET_INVOICE_FILE_URI = "/json/invoice_file"
 GET_INVOICE_PRINT_URI = "/json/invoice_print"
+GET_COMPANY_VAT_INFO_URI = "/json/ban_query"
 
 # Flattened environment variable declarations
 INVOICE_API_ACCOUNT = os.getenv("INVOICE_API_ACCOUNT", INVOICE_API_TEST_ACCOUNT)

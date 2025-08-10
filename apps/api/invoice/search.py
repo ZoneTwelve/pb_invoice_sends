@@ -5,7 +5,7 @@ from typing import List
 from urllib.parse import urljoin
 from invoice.utils import create_package, send_request
 from invoice.utils import InvoiceNumberItem
-from invoice.constants import INVOICE_API_BASE_URL, STATUS_INVOICE_URI, SEARCH_INVOICE_LIST_URI, GET_INVOICE_PRINT_URI
+from invoice.constants import INVOICE_API_BASE_URL, STATUS_INVOICE_URI, SEARCH_INVOICE_LIST_URI, GET_INVOICE_PRINT_URI, GET_COMPANY_VAT_INFO_URI
 
 from invoice.utils import InvoiceNumberByPeriod
 
@@ -43,6 +43,17 @@ def get_print_invoice(
 ):
     timestamp = int(time.time())
     url = urljoin(INVOICE_API_BASE_URL, GET_INVOICE_PRINT_URI)
+    package = create_package(timestamp, data, api_key, vatid)
+
+    return send_request(url, package)
+
+def get_company_vat_info(
+    data: InvoiceNumberByPeriod,
+    api_key: str = None,
+    vatid: str = None
+):
+    timestamp = int(time.time())
+    url = urljoin(INVOICE_API_BASE_URL, GET_COMPANY_VAT_INFO_URI)
     package = create_package(timestamp, data, api_key, vatid)
 
     return send_request(url, package)
