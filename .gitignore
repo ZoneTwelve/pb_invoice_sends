@@ -204,3 +204,5 @@ __marimo__/
 
 *production*
 config.txt
+
+.DS_Store
