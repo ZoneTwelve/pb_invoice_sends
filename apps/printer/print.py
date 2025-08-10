@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from pathlib import Path
 
 # Load environment variables
-load_dotenv("config.txt")
+load_dotenv("IveConfig.txt")
 
 SERVER_ADDR = os.getenv("SERVER_ADDR")
 VATID = os.getenv("VATID")
