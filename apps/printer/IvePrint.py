@@ -65,7 +65,7 @@ def print_to_usb_printer(base64_data: str):
 
     cfg = dev.get_active_configuration()
     intf = cfg[(0, 0)]
-    ep_out = usb.util.find_descriptoOBOBr(
+    ep_out = usb.util.find_descriptor(
         intf,
         custom_match=lambda e: usb.util.endpoint_direction(e.bEndpointAddress) == usb.util.ENDPOINT_OUT
     )
